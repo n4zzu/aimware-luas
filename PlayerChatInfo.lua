@@ -27,7 +27,6 @@ Data[Enemy] = { };
 Data[Teammate] = { };
 
 
--- CPI = "Chat Player Info" ("Player Chat Info")
 local Menu_Reference = gui.Reference("MISC", "GENERAL", "Extra");
 local miscRef = gui.Reference("MISC")
 local miscTab = gui.Tab(miscRef, "miscTab", "Chat Info")

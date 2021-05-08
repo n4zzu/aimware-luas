@@ -1,7 +1,8 @@
 local miscRef = gui.Reference("RAGEBOT")
-local dreamysense = gui.Tab(miscRef, "nxzAA", "nxzAA")
-local miscGroup = gui.Groupbox(dreamysense, "AA Settings", 16,16,296,100)
-local miscGroup2 = gui.Groupbox(dreamysense, "Misc Settings", 328,16,296,100)
+local nxzAA = gui.Tab(miscRef, "nxzAA", "nxzAA")
+local miscGroup = gui.Groupbox(nxzAA, "AA Settings", 16,16,296,100)
+local miscGroup2 = gui.Groupbox(nxzAA, "Misc Settings", 328,16,296,100)
+local miscGroup3 = gui.Groupbox(nxzAA, "Fakelag Settings", 16, 290, 296, 100)
 
 local lagSyncCheckBox = gui.Checkbox(miscGroup, "lagsync", "LagSync V1", false)
 local lagSyncCheckBox2 = gui.Checkbox(miscGroup, "lagsync2", "LagSync V2", false)
@@ -12,6 +13,18 @@ local sniperXHair = gui.Checkbox(miscGroup2, "sniperxhair", "Sniper Crosshair", 
 local killEffect = gui.Checkbox(miscGroup2, "killEffect", "Kill Effect", false)
 local killEffectTime = gui.Slider(miscGroup2, "killEffectTime", "Kill Effect Time", 3, 3, 10)
 local engineGrenadePred = gui.Checkbox(miscGroup2, "grenPred", "Engine Grenade Prediction", false)
+local forceBaimCheckBox = gui.Checkbox(miscGroup2, "forceBaim", "Force Baim", false)
+
+local nxzLagCheckBox = gui.Checkbox(miscGroup3, "nxzLag", "nxzLag", false)
+local adaptiveJitterCheckBox = gui.Checkbox(miscGroup3, "adaptiveJitter", "Adaptive Jitter", false)
+
+lagSyncCheckBox:SetDescription("LagSync with wide jitter")
+lagSyncCheckBox2:SetDescription("LagSync with smaller jitter")
+idealTickCheckBox:SetDescription("Teleport back to cover when peaking")
+sniperXHair:SetDescription("Forces engine crosshair on snipers")
+killEffect:SetDescription("Healthshot overlay on kill")
+killEffectTime:SetDescription("Healthshot duration")
+engineGrenadePred:SetDescription("Forces engine grenade prediction")
 
 local devMode = "[DEV]"
 local userName = client.GetConVar( "name" )
@@ -160,23 +173,6 @@ end
 
 --[[lagSync2 End]]--
 
---[[Indicators Start]]--
-
-local function indicators()
-    local quickPeakKey = gui.GetValue("rbot.accuracy.movement.autopeekkey")
-    if input.IsButtonDown(quickPeakKey) and idealTickCheckBox:GetValue() then
-        draw.Color(23, 255, 23)
-        draw.SetFont(indFont)
-        draw.TextShadow(5, 800, "IT")
-    elseif idealTickCheckBox:GetValue() then
-        draw.Color(255, 23, 23)
-        draw.SetFont(indFont)
-        draw.TextShadow(5, 800, "IT")
-    end
-end
-
---[[Indicators End]]--
-
 --[[SNIPER CROSSHAIR START]]--
 callbacks.Register('Draw', function()
     if sniperXHair:GetValue() then 
@@ -229,11 +225,95 @@ local function engineNadePred()
 end
 --[[GRENADE PRED END]]--
 
+--[[FakeLag Start]]--
+
+local function nxzLag()
+    if nxzLagCheckBox:GetValue() == true then
+        gui.SetValue("misc.fakelag.type", math.random(0, 2))
+        gui.SetValue("misc.fakelag.factor", math.random(6, 14))
+        gui.SetValue("misc.slidewalk", math.random(0, 1))
+    else
+        return
+    end
+end
+
+local function adaptiveJitter()
+    if adaptiveJitterCheckBox:GetValue() == true then
+        local Localplayer, LocalplayerIndex, LocalplayerVALID = entities.GetLocalPlayer(), client.GetLocalPlayerIndex(), false;
+        if (Localplayer ~= nil) then LocalplayerVALID = true; end
+        local Velocity = LocalplayerVALID and 
+        Round(math.sqrt(Localplayer:GetPropFloat("localdata", "m_vecVelocity[0]") ^ 2 + Localplayer:GetPropFloat("localdata", "m_vecVelocity[1]") ^ 2), 0)
+        or "0";
+
+        if tonumber(Velocity) <= 131 then
+            gui.SetValue("misc.fakelag.type", 3)
+            gui.SetValue("misc.fakelag.factor", math.random(11, 15))
+            gui.SetValue("misc.slidewalk", math.random(0, 1))
+        elseif tonumber(Velocity) >= 132 then
+            gui.SetValue("misc.fakelag.type", 1)
+            gui.SetValue("misc.fakelag.factor", math.random(8, 12))
+            gui.SetValue("misc.slidewalk", 0)
+        end
+    else
+        return
+    end
+end
+
+--[[FakeLag End]]--
+
+--[[Force Baim Start]]--
+
+local function forceBaim()
+    if forceBaimCheckBox:GetValue() == true then
+        gui.SetValue("rbot.hitscan.mode.scout.bodyaim.force", true)
+        gui.SetValue("rbot.hitscan.mode.asniper.bodyaim.force", true)
+        gui.SetValue("rbot.hitscan.mode.sniper.bodyaim.force", true)
+        gui.SetValue("rbot.hitscan.mode.pistol.bodyaim.force", true)
+        gui.SetValue("rbot.hitscan.mode.hpistol.bodyaim.force", true)
+    else
+        gui.SetValue("rbot.hitscan.mode.scout.bodyaim.force", false)
+        gui.SetValue("rbot.hitscan.mode.asniper.bodyaim.force", false)
+        gui.SetValue("rbot.hitscan.mode.sniper.bodyaim.force", false)
+        gui.SetValue("rbot.hitscan.mode.pistol.bodyaim.force", false)
+        gui.SetValue("rbot.hitscan.mode.hpistol.bodyaim.force", false)
+    end
+end
+
+--[[Force Baim Start]]--
+
+--[[Indicators Start]]--
+
+local function indicators()
+    local quickPeakKey = gui.GetValue("rbot.accuracy.movement.autopeekkey")
+    if quickPeakKey ~= 0 and input.IsButtonDown(quickPeakKey) and idealTickCheckBox:GetValue() then
+        draw.Color(23, 255, 23)
+        draw.SetFont(indFont)
+        draw.TextShadow(5, 800, "IT")
+    elseif idealTickCheckBox:GetValue() then
+        draw.Color(255, 23, 23)
+        draw.SetFont(indFont)
+        draw.TextShadow(5, 800, "IT")
+    end
+
+    if forceBaimCheckBox:GetValue() == true then
+        draw.Color(23, 255, 23)
+        draw.SetFont(indFont)
+        draw.TextShadow(5, 825, "BAIM")
+    else
+        return
+    end
+end
+
+--[[Indicators End]]--
+
 callbacks.Register("Draw", lagSync)
 callbacks.Register("Draw", lagSync2)
 callbacks.Register("Draw", idealTick)
 callbacks.Register("Draw", watermark)
 callbacks.Register("Draw", indicators)
 callbacks.Register("Draw", engineNadePred)
+callbacks.Register("Draw", nxzLag)
+callbacks.Register("Draw", adaptiveJitter)
+callbacks.Register("Draw", forceBaim)
 callbacks.Register("FireGameEvent", "nadePredict", engineNadePred)
 callbacks.Register("Draw", function() killEffectTime:SetInvisible(killEffect:GetValue() == false) end)

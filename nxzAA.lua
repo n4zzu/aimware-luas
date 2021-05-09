@@ -4,12 +4,12 @@ local miscGroup = gui.Groupbox(nxzAA, "AA Settings", 16,16,296,100)
 local miscGroup2 = gui.Groupbox(nxzAA, "Misc Settings", 328,16,296,100)
 local miscGroup3 = gui.Groupbox(nxzAA, "Fakelag Settings", 16, 390, 296, 100)
 
+local idealTickCheckBox = gui.Checkbox(miscGroup, "idealTick", "Ideal Tick", false)
+local idealTickMinDmg = gui.Slider(miscGroup, "idealTickMinDmg", "idealTick Min Dmg", 1, 1, 130)
 local lagSyncCheckBox = gui.Checkbox(miscGroup, "lagsync", "LagSync V1", false)
 local lagSyncCheckBox2 = gui.Checkbox(miscGroup, "lagsync2", "LagSync V2", false)
 local lowDeltaCheckBox = gui.Checkbox(miscGroup, "lowDelta", "Low Delta", false)
 local lowDeltaInvertCheckBox = gui.Checkbox(miscGroup, "lowDeltaInvert", "Invert Low Delta", false)
-local idealTickCheckBox = gui.Checkbox(miscGroup, "idealTick", "Ideal Tick", false)
-local idealTickMinDmg = gui.Slider(miscGroup, "idealTickMinDmg", "idealTick Min Dmg", 1, 1, 130)
 
 local sniperXHair = gui.Checkbox(miscGroup2, "sniperxhair", "Sniper Crosshair", false)
 local killEffect = gui.Checkbox(miscGroup2, "killEffect", "Kill Effect", false)
@@ -415,8 +415,24 @@ local function indicators()
     end
 end
 
---[[Indicators End]]--
+local function ldInd()
+    if lowDeltaCheckBox:GetValue() == true and lowDeltaInvertCheckBox:GetValue() == true then
+        print("swaggin")
+        draw.Color(23, 255, 23)
+        draw.SetFont(indFont)
+        draw.TextShadow(5, 850, "LD <")
+    elseif lowDeltaCheckBox:GetValue() == true and lowDeltaInvertCheckBox:GetValue() == false then
+        print("swaggin")
+        draw.Color(23, 255, 23)
+        draw.SetFont(indFont)
+        draw.TextShadow(5, 850, "LD >")
+    else
+        return
+    end
+end
 
+--[[Indicators End]]--
+callbacks.Register("Draw", ldInd)
 callbacks.Register("Draw", lagSync)
 callbacks.Register("Draw", lagSync2)
 callbacks.Register("Draw", lowDelta)

@@ -53,6 +53,8 @@ local function Getserver()
     end
 end
 
+local tbl = {}
+
 cache = {}
 
 --[[Watermark Start]]--
@@ -83,6 +85,8 @@ function watermark()
     draw.Rect(9, 9, fullStringSize + nxzAATextSize + 14, 22)
     draw.Color(17,17,17,255)
     draw.Rect(10, 10, fullStringSize + nxzAATextSize + 12, 20)
+    draw.Color(gui.GetValue("theme.header.bg"))
+    draw.Line(10, 10, fullStringSize + nxzAATextSize + 22, 10)
     draw.Color(255, 255, 255)
     draw.TextShadow(15, 14, "nxz")
     draw.Color(252, 166, 255)
@@ -126,6 +130,9 @@ function idealTick()
         gui.SetValue("rbot.accuracy.weapon.hpistol.mindmg", idealTickMinDmg:GetValue())
         overriden = true
 		manaully_changing = true
+		if not tbl["IT"] then
+			tbl["IT"] = "IT"
+		end
 	end
 	
 	if quickPeakKey ~= 0 and input.IsButtonReleased(quickPeakKey) and overriden then
@@ -141,6 +148,7 @@ function idealTick()
         gui.SetValue("rbot.accuracy.weapon.hpistol.mindmg", cache2.hpistolMinDmg)
 		overriden = false
 		manaully_changing = false
+        tbl["IT"] = nil
 	end
 	
 	if not manaully_changing then
@@ -368,6 +376,13 @@ local function forceBaim()
     if not manaully_changing then
 		cache_fn()
 	end
+    if forceBaimCheckBox:GetValue() == true then
+        if not tbl["BAIM"] then
+			tbl["BAIM"] = "BAIM"
+		end
+    else
+        tbl["BAIM"] = nil
+    end
 end
 
 --[[Force Baim Start]]--
@@ -387,6 +402,20 @@ local function lowDelta()
     if lowDeltaCheckBox:GetValue() == true then
         gui.SetValue("rbot.antiaim.base.rotation", rotation)
         gui.SetValue("rbot.antiaim.base.lby", lby)  
+    else
+        tbl["LD"] = nil
+        return
+    end
+    if lowDeltaCheckBox:GetValue() == true and lowDeltaInvertCheckBox:GetValue() == true then
+        if not tbl["LD"] or tbl["LD"] == "LD ->" then
+            tbl["LD"] = "LD <-"
+        end
+    elseif lowDeltaCheckBox:GetValue() == true and lowDeltaInvertCheckBox:GetValue() == false then
+        if not tbl["LD"] or tbl["LD"] == "LD <-" then
+            tbl["LD"] = "LD ->"
+        end
+    else
+        return
     end
 end
 
@@ -395,44 +424,61 @@ end
 --[[Indicators Start]]--
 
 local function indicators()
-    local quickPeakKey = gui.GetValue("rbot.accuracy.movement.autopeekkey")
-    if quickPeakKey ~= 0 and input.IsButtonDown(quickPeakKey) and idealTickCheckBox:GetValue() then
-        draw.Color(23, 255, 23)
+    local i = 0
+    for k,v in pairs(tbl) do
+        i = i + 1
         draw.SetFont(indFont)
-        draw.TextShadow(5, 800, "IT")
-    elseif idealTickCheckBox:GetValue() then
-        draw.Color(255, 23, 23)
-        draw.SetFont(indFont)
-        draw.TextShadow(5, 800, "IT")
-    end
-
-    if forceBaimCheckBox:GetValue() == true then
-        draw.Color(23, 255, 23)
-        draw.SetFont(indFont)
-        draw.TextShadow(5, 825, "BAIM")
-    else
-        return
-    end
-end
-
-local function ldInd()
-    if lowDeltaCheckBox:GetValue() == true and lowDeltaInvertCheckBox:GetValue() == true then
-        print("swaggin")
-        draw.Color(23, 255, 23)
-        draw.SetFont(indFont)
-        draw.TextShadow(5, 850, "LD <")
-    elseif lowDeltaCheckBox:GetValue() == true and lowDeltaInvertCheckBox:GetValue() == false then
-        print("swaggin")
-        draw.Color(23, 255, 23)
-        draw.SetFont(indFont)
-        draw.TextShadow(5, 850, "LD >")
-    else
-        return
+        draw.Color(gui.GetValue("theme.tablist.text"))
+        draw.Text(15, 790 + (i * 20), v)
     end
 end
 
 --[[Indicators End]]--
-callbacks.Register("Draw", ldInd)
+
+--[[Indicator Box Start]]--
+
+local function text_sizes(tbl)
+    local text_y = 0
+    for k, v in pairs(tbl) do
+        local _, y = draw.GetTextSize(v)
+        text_y = text_y + y
+    end
+    return text_y
+end
+
+local function indicatorBox()
+    local i = 0
+    for k,v in pairs(tbl) do
+        i = i + 1
+        local vertical_scale = text_sizes(tbl)
+        vertical_scale = vertical_scale == 27 and 35 or vertical_scale
+        if vertical_scale == 9 then
+            vertical_scale = 0
+        end
+        if vertical_scale == 18 then
+            vertical_scale = 20
+        end
+        if vertical_scale == 35 then
+            vertical_scale = 40
+        end
+        draw.Color(5,5,5,255)
+        draw.Rect(5, 800, 77, 38 + vertical_scale) -- 100 38
+        draw.Color(60,60,60,255)
+        draw.Rect(6, 801, 75, 36 + vertical_scale) -- 98 36
+        draw.Color(40,40,40,255)
+        draw.Rect(7, 802, 73, 33 + vertical_scale) -- 96 33
+        draw.Color(60,60,60,255)
+        draw.Rect(9, 804, 69, 29 + vertical_scale) -- 94 29
+        draw.Color(17,17,17,255)
+        draw.Rect(10, 805, 67, 27 + vertical_scale) -- 92 27
+        draw.Color(gui.GetValue("theme.header.bg"))
+        draw.Line(10, 805, 77, 805)
+    end
+end
+
+--[[Indicator Box Start]]--
+
+callbacks.Register("Draw", indicatorBox)
 callbacks.Register("Draw", lagSync)
 callbacks.Register("Draw", lagSync2)
 callbacks.Register("Draw", lowDelta)

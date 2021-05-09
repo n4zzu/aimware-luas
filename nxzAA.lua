@@ -2,10 +2,12 @@ local miscRef = gui.Reference("RAGEBOT")
 local nxzAA = gui.Tab(miscRef, "nxzAA", "nxzAA")
 local miscGroup = gui.Groupbox(nxzAA, "AA Settings", 16,16,296,100)
 local miscGroup2 = gui.Groupbox(nxzAA, "Misc Settings", 328,16,296,100)
-local miscGroup3 = gui.Groupbox(nxzAA, "Fakelag Settings", 16, 290, 296, 100)
+local miscGroup3 = gui.Groupbox(nxzAA, "Fakelag Settings", 16, 390, 296, 100)
 
 local lagSyncCheckBox = gui.Checkbox(miscGroup, "lagsync", "LagSync V1", false)
 local lagSyncCheckBox2 = gui.Checkbox(miscGroup, "lagsync2", "LagSync V2", false)
+local lowDeltaCheckBox = gui.Checkbox(miscGroup, "lowDelta", "Low Delta", false)
+local lowDeltaInvertCheckBox = gui.Checkbox(miscGroup, "lowDeltaInvert", "Invert Low Delta", false)
 local idealTickCheckBox = gui.Checkbox(miscGroup, "idealTick", "Ideal Tick", false)
 local idealTickMinDmg = gui.Slider(miscGroup, "idealTickMinDmg", "idealTick Min Dmg", 1, 1, 130)
 
@@ -14,17 +16,22 @@ local killEffect = gui.Checkbox(miscGroup2, "killEffect", "Kill Effect", false)
 local killEffectTime = gui.Slider(miscGroup2, "killEffectTime", "Kill Effect Time", 3, 3, 10)
 local engineGrenadePred = gui.Checkbox(miscGroup2, "grenPred", "Engine Grenade Prediction", false)
 local forceBaimCheckBox = gui.Checkbox(miscGroup2, "forceBaim", "Force Baim", false)
+local forceBaimComboBox = gui.Combobox(miscGroup2, "forceBaimOptions", "Force Baim Strength", "Normal", "Strong", "Super Strong (Will cause you to shoot slower)")
 
 local nxzLagCheckBox = gui.Checkbox(miscGroup3, "nxzLag", "nxzLag", false)
 local adaptiveJitterCheckBox = gui.Checkbox(miscGroup3, "adaptiveJitter", "Adaptive Jitter", false)
 
 lagSyncCheckBox:SetDescription("LagSync with wide jitter")
 lagSyncCheckBox2:SetDescription("LagSync with smaller jitter")
+lowDeltaCheckBox:SetDescription("Low Delta AA")
+lowDeltaInvertCheckBox:SetDescription("Invert Low Delta")
 idealTickCheckBox:SetDescription("Teleport back to cover when peaking")
 sniperXHair:SetDescription("Forces engine crosshair on snipers")
 killEffect:SetDescription("Healthshot overlay on kill")
 killEffectTime:SetDescription("Healthshot duration")
 engineGrenadePred:SetDescription("Forces engine grenade prediction")
+nxzLagCheckBox:SetDescription("beste p100 fakelag math.random")
+adaptiveJitterCheckBox:SetDescription("Switch FL on slowwalk & standing. Adaptive on move")
 
 local devMode = "[DEV]"
 local userName = client.GetConVar( "name" )
@@ -108,7 +115,7 @@ function idealTick()
     local quickPeakKey = gui.GetValue("rbot.accuracy.movement.autopeekkey")
 	if quickPeakKey ~= 0 and input.IsButtonDown(quickPeakKey) and not overriden and idealTickCheckBox:GetValue() then
         gui.SetValue("misc.fakelatency.enable", true)
-        gui.SetValue("misc.fakelatency.amount", 100)
+        gui.SetValue("misc.fakelatency.amount", 120)
         gui.SetValue("misc.fakelag.enable", false)
         gui.SetValue("misc.fakelag.factor", 1)
         gui.SetValue("rbot.accuracy.weapon.sniper.doublefire", 2)
@@ -263,23 +270,127 @@ end
 
 --[[Force Baim Start]]--
 
+cache3 = {}
+local function cache_fn()
+    cache3.scoutHitPoints = gui.GetValue("rbot.hitscan.points.scout.scale")
+    cache3.sniperHitPoints = gui.GetValue("rbot.hitscan.points.sniper.scale")
+    cache3.asniperHitPoints = gui.GetValue("rbot.hitscan.points.asniper.scale")
+    cache3.hpistolHitPoints = gui.GetValue("rbot.hitscan.points.hpistol.scale")
+    cache3.pistolHitPoints = gui.GetValue("rbot.hitscan.points.pistol.scale")
+
+    cache3.scoutBaim = gui.GetValue("rbot.hitscan.mode.scout.bodyaim.force")
+    cache3.sniperBaim = gui.GetValue("rbot.hitscan.mode.sniper.bodyaim.force")
+    cache3.asniperBaim = gui.GetValue("rbot.hitscan.mode.asniper.bodyaim.force")
+    cache3.hpistolBaim = gui.GetValue("rbot.hitscan.mode.hpistol.bodyaim.force")
+    cache3.pistolBaim = gui.GetValue("rbot.hitscan.mode.pistol.bodyaim.force")
+end
+
+cache_fn()
+
+local overriden = false
+local manaully_changing = false
+
 local function forceBaim()
-    if forceBaimCheckBox:GetValue() == true then
+    if forceBaimCheckBox:GetValue() == true and forceBaimComboBox:GetValue() == 0 and not overriden then
         gui.SetValue("rbot.hitscan.mode.scout.bodyaim.force", true)
         gui.SetValue("rbot.hitscan.mode.asniper.bodyaim.force", true)
         gui.SetValue("rbot.hitscan.mode.sniper.bodyaim.force", true)
         gui.SetValue("rbot.hitscan.mode.pistol.bodyaim.force", true)
         gui.SetValue("rbot.hitscan.mode.hpistol.bodyaim.force", true)
-    else
+        overriden = true
+        manaully_changing = true
+    end
+    if forceBaimCheckBox:GetValue() == false and forceBaimComboBox:GetValue() == 0 and overriden then
+        gui.SetValue("rbot.hitscan.mode.scout.bodyaim.force", cache3.scoutBaim)
+        gui.SetValue("rbot.hitscan.mode.asniper.bodyaim.force", cache3.asniperBaim)
+        gui.SetValue("rbot.hitscan.mode.sniper.bodyaim.force", cache3.sniperBaim)
+        gui.SetValue("rbot.hitscan.mode.pistol.bodyaim.force", cache3.pistolBaim)
+        gui.SetValue("rbot.hitscan.mode.hpistol.bodyaim.force", cache3.hpistolBaim)
+        overriden = false
+        manaully_changing = false
+    end
+    if forceBaimCheckBox:GetValue() == true and forceBaimComboBox:GetValue() == 1 and not overriden then
+        gui.SetValue("rbot.hitscan.mode.scout.bodyaim.force", true)
+        gui.SetValue("rbot.hitscan.mode.asniper.bodyaim.force", true)
+        gui.SetValue("rbot.hitscan.mode.sniper.bodyaim.force", true)
+        gui.SetValue("rbot.hitscan.mode.pistol.bodyaim.force", true)
+        gui.SetValue("rbot.hitscan.mode.hpistol.bodyaim.force", true)
+        gui.Command("rbot.hitscan.points.scout.scale 0 2 0 2 2 0 0 0 ")
+        gui.Command("rbot.hitscan.points.sniper.scale 0 2 0 2 2 0 0 0 ")
+        gui.Command("rbot.hitscan.points.asniper.scale 0 2 0 2 2 0 0 0 ")
+        gui.Command("rbot.hitscan.points.pistol.scale 0 2 0 2 2 0 0 0 ")
+        gui.Command("rbot.hitscan.points.hpistol.scale 0 2 0 2 2 0 0 0 ")
+        overriden = true
+        manaully_changing = true
+    end
+    if forceBaimCheckBox:GetValue() == false and forceBaimComboBox:GetValue() == 1 and overriden then
         gui.SetValue("rbot.hitscan.mode.scout.bodyaim.force", false)
         gui.SetValue("rbot.hitscan.mode.asniper.bodyaim.force", false)
         gui.SetValue("rbot.hitscan.mode.sniper.bodyaim.force", false)
         gui.SetValue("rbot.hitscan.mode.pistol.bodyaim.force", false)
         gui.SetValue("rbot.hitscan.mode.hpistol.bodyaim.force", false)
+        gui.SetValue("rbot.hitscan.points.scout.scale", cache3.scoutHitPoints)
+        gui.SetValue("rbot.hitscan.points.sniper.scale", cache3.sniperHitPoints)
+        gui.SetValue("rbot.hitscan.points.asniper.scale", cache3.asniperHitPoints)
+        gui.SetValue("rbot.hitscan.points.pistol.scale", cache3.pistolHitPoints)
+        gui.SetValue("rbot.hitscan.points.hpistol.scale", cache3.hpistolHitPoints)
+        overriden = false
+        manaully_changing = false
     end
+    if forceBaimCheckBox:GetValue() == true and forceBaimComboBox:GetValue() == 2 and not overriden then
+        gui.SetValue("rbot.hitscan.mode.scout.bodyaim.force", true)
+        gui.SetValue("rbot.hitscan.mode.asniper.bodyaim.force", true)
+        gui.SetValue("rbot.hitscan.mode.sniper.bodyaim.force", true)
+        gui.SetValue("rbot.hitscan.mode.pistol.bodyaim.force", true)
+        gui.SetValue("rbot.hitscan.mode.hpistol.bodyaim.force", true)
+        gui.Command("rbot.hitscan.points.scout.scale 0 3 0 4 4 0 0 0 ")
+        gui.Command("rbot.hitscan.points.sniper.scale 0 3 0 4 4 0 0 0 ")
+        gui.Command("rbot.hitscan.points.asniper.scale 0 3 0 4 4 0 0 0 ")
+        gui.Command("rbot.hitscan.points.pistol.scale 0 3 0 4 4 0 0 0 ")
+        gui.Command("rbot.hitscan.points.hpistol.scale 0 3 0 4 4 0 0 0 ")
+        overriden = true
+        manaully_changing = true
+    end
+    if forceBaimCheckBox:GetValue() == false and forceBaimComboBox:GetValue() == 2 and overriden then
+        gui.SetValue("rbot.hitscan.mode.scout.bodyaim.force", false)
+        gui.SetValue("rbot.hitscan.mode.asniper.bodyaim.force", false)
+        gui.SetValue("rbot.hitscan.mode.sniper.bodyaim.force", false)
+        gui.SetValue("rbot.hitscan.mode.pistol.bodyaim.force", false)
+        gui.SetValue("rbot.hitscan.mode.hpistol.bodyaim.force", false)
+        gui.SetValue("rbot.hitscan.points.scout.scale", cache3.scoutHitPoints)
+        gui.SetValue("rbot.hitscan.points.sniper.scale", cache3.sniperHitPoints)
+        gui.SetValue("rbot.hitscan.points.asniper.scale", cache3.asniperHitPoints)
+        gui.SetValue("rbot.hitscan.points.pistol.scale", cache3.pistolHitPoints)
+        gui.SetValue("rbot.hitscan.points.hpistol.scale", cache3.hpistolHitPoints)
+        overriden = false
+        manaully_changing = false
+    end
+    if not manaully_changing then
+		cache_fn()
+	end
 end
 
 --[[Force Baim Start]]--
+
+--[[Low Delta Start]]--
+
+local function lowDelta()
+    rotation = 6
+    lby = -68
+    if lowDeltaInvertCheckBox:GetValue() == true then
+        rotation = -6
+        lby = 68
+    else
+        rotation = 6
+        lby = -68
+    end
+    if lowDeltaCheckBox:GetValue() == true then
+        gui.SetValue("rbot.antiaim.base.rotation", rotation)
+        gui.SetValue("rbot.antiaim.base.lby", lby)  
+    end
+end
+
+--[[Low Delta End]]--
 
 --[[Indicators Start]]--
 
@@ -308,6 +419,7 @@ end
 
 callbacks.Register("Draw", lagSync)
 callbacks.Register("Draw", lagSync2)
+callbacks.Register("Draw", lowDelta)
 callbacks.Register("Draw", idealTick)
 callbacks.Register("Draw", watermark)
 callbacks.Register("Draw", indicators)

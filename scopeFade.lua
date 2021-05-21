@@ -27,7 +27,6 @@ local function scopeFade()
     end
     if not manaully_changing then
         cacheScopeFadeFunc()
-        print(is_scoped)
     end
 end
 

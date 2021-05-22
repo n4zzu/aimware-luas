@@ -61,7 +61,7 @@ end
 
 local function scopeFade(e)
     local eventName = e:GetName()
-    if eventName ~= "weapon_zoom" and eventName ~= "item_equip" and eventName ~= "weapon_fire" then return end
+    if eventName ~= "weapon_zoom" and eventName ~= "item_equip" then return end
     local lp = entities.GetLocalPlayer()
     local player = entities.GetByUserID(e:GetInt("userid"))
     if lp:GetIndex() ~= player:GetIndex() then return end
@@ -83,4 +83,3 @@ callbacks.Register("FireGameEvent", scopeFade)
 callbacks.Register("Unload", unload)
 client.AllowListener("weapon_zoom")
 client.AllowListener("item_equip")
-client.AllowListener("weapon_fire")

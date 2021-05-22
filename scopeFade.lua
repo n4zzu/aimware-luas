@@ -1,28 +1,28 @@
-local ItemsToOverride = {
+local itemsToOverride = {
     {item = "esp.chams.local.visible",  mode = 2, alpha = 119},
     {item = "esp.chams.ghost.visible", mode = 2, alpha = 119},
 }
 local cache = {
-    Cache = {},
-    Create = function(self)
-        for k,v in pairs(ItemsToOverride) do
+    cache = {},
+    create = function(self)
+        for k,v in pairs(itemsToOverride) do
             itm = v.item
-            table.insert(self.Cache, {
+            table.insert(self.cache, {
                 menu = itm,
                 mode = gui.GetValue(itm), 
                 color = {gui.GetValue(itm .. ".clr")}
             })
         end
     end,
-    Destroy = function(self)
-        self.Cache = {}
+    destroy = function(self)
+        self.cache = {}
     end,
-    Revert = function(self)
-        for k,v in pairs(self.Cache) do
+    revert = function(self)
+        for k,v in pairs(self.cache) do
             gui.SetValue(v.menu, v.mode)
             gui.SetValue(v.menu .. ".clr", unpack(v.color))
         end
-        self:Destroy()
+        self:destroy()
     end
 }
 local weaponsWithScope = {
@@ -40,9 +40,9 @@ local overriden = false
 local manaullyChanging = false
 
 local function override()
-    cache:Create()
+    cache:create()
 
-    for k,v in pairs(ItemsToOverride) do
+    for k,v in pairs(itemsToOverride) do
         local color = {gui.GetValue(v.item .. ".clr")}
         color[4] = v.alpha
         gui.SetValue(v.item, v.mode)
@@ -54,7 +54,7 @@ local function override()
 end
 
 local function undo()
-    cache:Revert()
+    cache:revert()
     overriden = false
     manaullyChanging = false
 end
@@ -76,7 +76,7 @@ local function scopeFade(e)
     end
 end
 local function unload()
-    cache:Revert()
+    cache:revert()
 end
 
 callbacks.Register("FireGameEvent", scopeFade)

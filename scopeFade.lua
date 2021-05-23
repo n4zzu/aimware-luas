@@ -1,33 +1,87 @@
-cacheScopeFade = {}
+local itemsToOverride = {
+    {item = "esp.chams.local.visible",  mode = 2, alpha = 119},
+    {item = "esp.chams.ghost.visible", mode = 2, alpha = 119},
+}
+local cache = {
+    cache = {},
+    create = function(self)
+        for k,v in pairs(itemsToOverride) do
+            itm = v.item
+            table.insert(self.cache, {
+                menu = itm,
+                mode = gui.GetValue(itm), 
+                color = {gui.GetValue(itm .. ".clr")}
+            })
+        end
+    end,
+    destroy = function(self)
+        self.cache = {}
+    end,
+    revert = function(self)
+        for k,v in pairs(self.cache) do
+            gui.SetValue(v.menu, v.mode)
+            gui.SetValue(v.menu .. ".clr", unpack(v.color))
+        end
+        self:destroy()
+    end
+}
+local weaponsWithScope = {
+    ["weapon_awp"] = true,
+    ["weapon_g3sg1"] = true,
+    ["weapon_scar20"] = true,
+    ["weapon_ssg08"] = true,
+}
 
-local function cacheScopeFadeFunc()
-    cacheScopeFade.chamType = gui.GetValue("esp.chams.local.visible")
-    cacheScopeFade.chamColourR, cacheScopeFade.chamColourG, cacheScopeFade.chamColourB, cacheScopeFade.chamColourA = gui.GetValue("esp.chams.local.visible.clr")
+local function canScope(weapon)
+    return weaponsWithScope[tostring(weapon)] or false
 end
-
-cacheScopeFadeFunc()
 
 local overriden = false
-local manaully_changing = false
+local manaullyChanging = false
 
-local function scopeFade()
-    local weapon = entities.GetLocalPlayer():GetPropEntity("m_hActiveWeapon")
-    local is_scoped = weapon:GetPropBool("m_zoomLevel")
-    if is_scoped == true and not overriden then
-        gui.SetValue("esp.chams.local.visible", 2)
-        gui.SetValue("esp.chams.local.visible.clr", 112, 109, 103, 119)
-        overriden = true
-        manaully_changing = true
+local function override()
+    cache:create()
+
+    for k,v in pairs(itemsToOverride) do
+        local color = {gui.GetValue(v.item .. ".clr")}
+        color[4] = v.alpha
+        gui.SetValue(v.item, v.mode)
+        gui.SetValue(v.item .. ".clr", unpack(color))
     end
-    if is_scoped == false  and overriden then
-        gui.SetValue("esp.chams.local.visible", cacheScopeFade.chamType)
-        gui.SetValue("esp.chams.local.visible.clr", cacheScopeFade.chamColourR, cacheScopeFade.chamColourG, cacheScopeFade.chamColourB, cacheScopeFade.chamColourA)
-        overriden = false
-        manaully_changing = false
-    end
-    if not manaully_changing then
-        cacheScopeFadeFunc()
-    end
+    
+    overriden = true
+    manaullyChanging = true
 end
 
-callbacks.Register("Draw", scopeFade)
+local function undo()
+    cache:revert()
+    overriden = false
+    manaullyChanging = false
+end
+
+local function scopeFade(e)
+    local eventName = e:GetName()
+    if eventName ~= "weapon_zoom" and eventName ~= "item_equip" and eventName ~= "weapon_fire" then return end
+    local lp = entities.GetLocalPlayer()
+    if lp == nil then return end
+    local player = entities.GetByUserID(e:GetInt("userid"))
+    if lp:GetIndex() ~= player:GetIndex() then return end
+    local weapon = lp:GetPropEntity("m_hActiveWeapon")
+
+    if not canScope(weapon) then if overriden then undo() end return end
+    local isScoped = weapon:GetPropBool("m_zoomLevel")
+    if isScoped and not overriden then
+        override()
+    elseif not isScoped and overriden then
+        undo()
+    end
+end
+local function unload()
+    cache:revert()
+end
+
+callbacks.Register("FireGameEvent", scopeFade)
+callbacks.Register("Unload", unload)
+client.AllowListener("weapon_zoom")
+client.AllowListener("item_equip")
+client.AllowListener("weapon_fire")

@@ -565,7 +565,7 @@ local function draw_callback()
                 gui.SetValue("esp.overlay.enemy.weapon", ui.Combo("enemy.weapon", {"Off", "Icon", "Name"}, gui.GetValue("esp.overlay.enemy.weapon") + 1) - 1)
 
                 ui.Label("Weapon fiter")
-                gui.SetValue("esp.overlay.enemy.weaponfilter", ui.Combo("enemy.weaponfilter", {"Acctive", "Acctive + Nades", "All"}, gui.GetValue("esp.overlay.enemy.weaponfilter") + 1) - 1)
+                gui.SetValue("esp.overlay.enemy.weaponfilter", ui.Combo("enemy.weaponfilter", {"Active", "Active + Nades", "All"}, gui.GetValue("esp.overlay.enemy.weaponfilter") + 1) - 1)
 
                 gui.SetValue("esp.overlay.enemy.ammo", ui.Checkbox("Ammo", gui.GetValue("esp.overlay.enemy.ammo"))) 
 

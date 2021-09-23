@@ -106,9 +106,9 @@ local function draw_callback()
 
                 end
                 
-                gui.SetValue("rbot.hitscan.shared.precisehitscan", ui.Checkbox("Precise hitscan", gui.GetValue("rbot.hitscan.shared.precisehitscan")))
+                gui.SetValue("rbot.hitscan.advanced.shared.precisehitscan", ui.Checkbox("Precise hitscan", gui.GetValue("rbot.hitscan.advanced.shared.precisehitscan")))
 
-                gui.SetValue("rbot.hitscan.shared.predictive", ui.Checkbox("Predictive", gui.GetValue("rbot.hitscan.shared.predictive")))
+                gui.SetValue("rbot.hitscan.advanced.shared.predictive", ui.Checkbox("Predictive", gui.GetValue("rbot.hitscan.advanced.shared.predictive")))
 
                 gui.SetValue("rbot.hitscan.maxprocessingtime",ui.Slider("Max processing time", 5, 75, "%", "5%", "75%", false, gui.GetValue("rbot.hitscan.maxprocessingtime")))
 
